@@ -1,0 +1,585 @@
+
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+The scenarios are using trading database which includes 3 tables (members, prices, transactions).
+
+The trading.prices table consists of information about the market participants.
+
+Column Name     Description
+member_id       unique id for each participant
+first_name      first name for each participant
+region          region where each participant is from
+
+The trading.prices table consists of daily price and volume information from January 2017 through to August 2021 for the 2 most popular cryptocurrency tickers: Bitcoin and Etherum.
+
+Column Name     Description
+ticker	        one of either BTC or ETH
+market_date	    the date for each record
+open	          the opening price
+price	          the closing price at end of day
+high	          the highest price for that day
+low	            the lowest price for that day
+volume	        the total volume traded
+change	        % change in daily price
+
+The trading.transactions table consists of buy and sell transactions data for each trade.
+
+Column Name	    Description
+txn_id	        unique ID for each transaction
+member_id	      member identifier for each trade
+ticker	        the ticker for each trade
+txn_date	      the date for each transaction
+txn_type	      either BUY or SELL
+quantity	      the total quantity for each trade
+percentage_fee  % of total amount charged as fees
+txn_time	      the timestamp for each trade
+
+Data can be found at: https://github.com/DataWithDanny/sql-masterclass/tree/main/data
+
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+SCENARIO 1: Basic Data Analysis Techniques
+
+*** Questrion 1 ***
+
+Show only the top 5 rows from the trading.members table.
+
+Answer: 
+
+select * from trading.members limit 5;
+
+ member_id | first_name |    region     
+-----------+------------+---------------
+ c4ca42    | Danny      | Australia
+ c81e72    | Vipul      | United States
+ eccbc8    | Charlie    | United States
+ a87ff6    | Nandita    | United States
+ e4da3b    | Rowan      | United States
+(5 rows)
+
+*** Question 2 ***
+
+Sort all the rows in the trading.members table by first_name in alphabetical order nad show the top 3 rows with all columns.
+
+Answer: 
+
+select * from trading.members order by first_name limit 3;
+
+ member_id | first_name |    region     
+-----------+------------+---------------
+ c9f0f8    | Abe        | United States
+ 8f14e4    | Alex       | United States
+ 167909    | Ayush      | United States
+(3 rows)
+
+Note: 
+
+The first_name column is a varchar data type (also known as string or text data type) which, by default, is sorted in alphabetical order when used with order by.
+
+*** Question 3 ***
+
+Count the number of records from the trading.members table which have United States as the region value.
+
+Answer: 
+
+select count(*) as record_count from trading.members where region='United States';
+
+ record_count 
+--------------
+            7
+(1 row)
+
+Note:
+
+AS operator can be used to name a computed field.
+
+*** Question 4 ***
+
+Select only the first _name and region columns for participants who are not from Australia.
+
+Solution: 
+
+select first_name, region from trading.members where region != 'Australia';
+
+ first_name |    region     
+------------+---------------
+ Vipul      | United States
+ Charlie    | United States
+ Nandita    | United States
+ Rowan      | United States
+ Ayush      | United States
+ Alex       | United States
+ Abe        | United States
+ Enoch      | Africa
+ Vikram     | India
+ Leah       | Asia
+(10 rows)
+
+*** Question 5 ***
+
+Return only the unique region values from the trading.members table and sort the output by reverse alphabetical order.
+
+Answer: 
+
+select distinct region from trading.members order by region desc;
+
+    region     
+---------------
+ United States
+ India
+ Australia
+ Asia
+ Africa
+(5 rows)
+
+Note:
+
+Another way to use order by clause is to refer to the columns by their "ordinal number" - or in simple terms: the order which the column or expression appears in the select statement.
+
+Alternative answer:
+
+select distinct region from trading.members order by 1 desc;
+
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+SCENARIO 2: Aggregate Functions for Data Analysis
+
+*** Question 1 ***
+
+How many records are there per ticker value in the trading.prices table?
+
+Answer: 
+
+select ticker, count(*) as record_count from trading.prices group by ticker;
+
+ ticker | record_count 
+--------+--------------
+ BTC    |         1702
+ ETH    |         1702
+(2 rows)
+
+Note: The same as for order by clause, for group by clause, columns can be referred by their "ordinal number".
+
+*** Question 2 ***
+
+What is the maximum, minimum values for the price column for both Bitcoin and Ethereum in 2020?
+
+Answer: 
+
+select ticker, min(price) as min_price, max(price) as max_price from trading.prices where market_date between '2020-01-01' and '2020-12-31' group by ticker;
+
+ ticker | min_price | max_price 
+--------+-----------+-----------
+ BTC    |      4826 |   28949.4
+ ETH    |     107.9 |     751.8
+(2 rows)
+
+Note: The group by aggregation is performed only after the where filters is executed. The between operator is very useful when dealing with ranges (the boundaries is inclusive).
+
+*** Question 3 ***
+
+What is the annual minimum, maximum and average price for each ticker?
+Include a calendar_year column with the year from 2017 through to 2021.
+Calculate a spread column which calculates the difference between the min and max prices.
+Round the average price output to 2 decimal places.
+Sort the output in chronological order with Bitcoin records before Etherum within each year.
+
+Answer: 
+
+select extract(year from market_date) as calendar_year, ticker, round(min(price)::numeric,2) as min_price, round(max(price)::numeric,2) as max_price, round(avg(price)::numeric,2) as average_price, round((max(price) - min(price))::numeric,2) as spread from trading.prices group by calendar_year, ticker order by calendar_year, ticker;
+
+ calendar_year | ticker | min_price | max_price | average_price |  spread  
+---------------+--------+-----------+-----------+---------------+----------
+          2017 | BTC    |    785.40 |  19345.50 |       3981.07 | 18560.10
+          2017 | ETH    |      8.20 |    799.98 |        220.34 |   791.78
+          2018 | BTC    |   3228.70 |  17172.30 |       7552.16 | 13943.60
+          2018 | ETH    |     83.81 |   1380.00 |        481.33 |  1296.19
+          2019 | BTC    |   3397.70 |  13063.80 |       7371.82 |  9666.10
+          2019 | ETH    |    104.55 |    338.54 |        180.99 |   233.99
+          2020 | BTC    |   4826.00 |  28949.40 |      11111.63 | 24123.40
+          2020 | ETH    |    107.90 |    751.80 |        307.30 |   643.90
+          2021 | BTC    |  29359.90 |  63540.90 |      44353.55 | 34181.00
+          2021 | ETH    |    729.12 |   4167.78 |       2199.12 |  3438.66
+(10 rows)
+
+*** Question 4 ***
+
+What is the montly average of the price column for each ticker from January 2020 and after?
+Create a month_start column with the first day of each month.
+Sort the output by ticker in alphabetical order and months in chronological order.
+Round the average_price column to 2 decimal places.
+
+Answer:
+
+select ticker, date_trunc('month', market_date)::date as month_start, round(avg(price)::numeric,2) as average_price from trading.prices where market_date >= '2020-01-01' group by ticker, month_start order by ticker, month_start;
+
+ ticker | month_start | average_price 
+--------+-------------+---------------
+ BTC    | 2020-01-01  |       8378.80
+ BTC    | 2020-02-01  |       9636.56
+ BTC    | 2020-03-01  |       6863.11
+ BTC    | 2020-04-01  |       7211.03
+ BTC    | 2020-05-01  |       9253.55
+ BTC    | 2020-06-01  |       9481.85
+ BTC    | 2020-07-01  |       9592.10
+ BTC    | 2020-08-01  |      11638.41
+ BTC    | 2020-09-01  |      10643.33
+ BTC    | 2020-10-01  |      11888.36
+ BTC    | 2020-11-01  |      16660.77
+ BTC    | 2020-12-01  |      21982.05
+ BTC    | 2021-01-01  |      34745.08
+ BTC    | 2021-02-01  |      46295.66
+ BTC    | 2021-03-01  |      54863.82
+ BTC    | 2021-04-01  |      57070.05
+ BTC    | 2021-05-01  |      46435.11
+ BTC    | 2021-06-01  |      35822.63
+ BTC    | 2021-07-01  |      34424.27
+ BTC    | 2021-08-01  |      45573.45
+ ETH    | 2020-01-01  |        156.65
+ ETH    | 2020-02-01  |        238.76
+ ETH    | 2020-03-01  |        160.18
+ ETH    | 2020-04-01  |        171.29
+ ETH    | 2020-05-01  |        207.45
+ ETH    | 2020-06-01  |        235.92
+ ETH    | 2020-07-01  |        259.57
+ ETH    | 2020-08-01  |        401.73
+ ETH    | 2020-09-01  |        367.77
+ ETH    | 2020-10-01  |        375.79
+ ETH    | 2020-11-01  |        486.73
+ ETH    | 2020-12-01  |        622.35
+ ETH    | 2021-01-01  |       1201.33
+ ETH    | 2021-02-01  |       1699.41
+ ETH    | 2021-03-01  |       1732.95
+ ETH    | 2021-04-01  |       2293.00
+ ETH    | 2021-05-01  |       3139.76
+ ETH    | 2021-06-01  |       2333.22
+ ETH    | 2021-07-01  |       2129.40
+ ETH    | 2021-08-01  |       3079.67
+(40 rows)
+
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+SCENARIO 3: Understanding Case When Statements
+
+*** Question 1 ***
+
+Convert volume column in the trading.prices table with an adjusted integer value to take into consideration the unit values.
+Return only the market_date, price, volume and adjusted_volume columns from the first 10 days of August 2021 for Etherum only.
+
+Answers:
+
+select market_date, round(price::numeric,2), volume, case when right(volume,1)='K' then left(volume,-1)::numeric*1000 when right(volume,1)='M' then left(volume,-1)::numeric*1000000 when volume='-' then 0 end as adjusted_volume from trading.prices where ticker='ETH' and market_date between '2021-08-01' and '2021-08-10' order by market_date;
+
+ market_date |  round  | volume  | adjusted_volume 
+-------------+---------+---------+-----------------
+ 2021-08-01  | 2556.23 | 1.20M   |      1200000.00
+ 2021-08-02  | 2608.04 | 970.67K |       970670.00
+ 2021-08-03  | 2506.65 | 158.45K |       158450.00
+ 2021-08-04  | 2725.29 | 1.23M   |      1230000.00
+ 2021-08-05  | 2827.21 | 1.65M   |      1650000.00
+ 2021-08-06  | 2889.43 | 1.06M   |      1060000.00
+ 2021-08-07  | 3158.00 | 64.84K  |        64840.00
+ 2021-08-08  | 3012.07 | 1.25M   |      1250000.00
+ 2021-08-09  | 3162.93 | 1.44M   |      1440000.00
+ 2021-08-10  | 3140.71 | 1.12M   |      1120000.00
+(10 rows)
+
+Notes:
+
+To build the answer, an analysis of the last chaacter of the volume fields is necessary. To do so we can use the following query.
+
+select right(volume, 1) as final_character, count(*) from trading.prices group by 1 order by 2 desc;
+
+ final_character | count 
+-----------------+-------
+ K               |  1963
+ M               |  1440
+ -               |     1
+(3 rows)
+
+*** Question 2 ***
+
+How many "breakout" days were there in 2020 where the price column is greater than the open column for each ticker?
+In the same query also calculate the number of "non breakout" days where the price column was lower than or equal to the open column.
+
+select ticker, sum(case when price > open then 1 when price <= open then 0 end) as breakout_days, sum(case when price <= open then 1 when price > open then 0 end) as non_breakout_days from trading.prices where market_date between '2020-01-01' and '2020-12-31' group by ticker order by ticker;
+
+ ticker | breakout_days | non_breakout_days 
+--------+---------------+-------------------
+ BTC    |           207 |               159
+ ETH    |           200 |               166
+(2 rows)
+
+Note:
+
+"Sum case when" pattern can be used to emulate count if excel function.
+
+*** Question 3 ***
+
+What was the final qunatity Bitcoin and Etherum held by all participants based off trading.transactions table?
+
+Answer:
+
+select ticker, sum(case when txn_type='SELL' then -quantity else quantity end) as hinal_holding from trading.transactions group by ticker order by ticker;
+
+ ticker |   hinal_holding    
+--------+--------------------
+ BTC    |  42848.66685384838
+ ETH    | 32801.042270309306
+(2 rows)
+
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+SCENARIO 4: Operating Window Functions
+
+Window functions are commonly used for rolling averagesm cumulative sums, ranking operations and comparison between values.
+
+*** Question 1 ***
+
+What are the market_date, price and volume and price_rank values for the days with the top highest price values for each ticker in the prices table?
+The price_rank column is the ranking for price values for each ticker with rank=1 for the highest value.
+Return the output for Bitcoin, followed by Ethereum in pric rank order.
+
+Solution:
+
+with cte_rank as (select ticker, market_date, price, volume, rank() over (partition by ticker order by price desc) as price_rank from trading.prices) select * from cte_rank where price_rank <= 5 order by ticker, price_rank;
+
+ ticker | market_date |  price  | volume  | price_rank 
+--------+-------------+---------+---------+------------
+ BTC    | 2021-04-13  | 63540.9 | 126.56K |          1
+ BTC    | 2021-04-15  |   63216 | 76.97K  |          2
+ BTC    | 2021-04-14  | 62980.4 | 130.43K |          3
+ BTC    | 2021-04-16  | 61379.7 | 136.85K |          4
+ BTC    | 2021-03-13  | 61195.3 | 134.64K |          5
+ ETH    | 2021-05-11  | 4167.78 | 1.27M   |          1
+ ETH    | 2021-05-14  | 4075.38 | 2.06M   |          2
+ ETH    | 2021-05-10  |  3947.9 | 2.70M   |          3
+ ETH    | 2021-05-09  | 3922.23 | 1.94M   |          4
+ ETH    | 2021-05-08  | 3905.55 | 1.34M   |          5
+(10 rows)
+
+Note:
+
+CTE stands for "Common Table Expression" and when we compare it to something simple like Excel, we can think of CTEs as transformations applied to raw data inside an existing Excel sheet.
+
+*** Question 2 ***
+
+Calculate 7 day rolling average for the price and volume columns in the trading.prices table for each ticker. Return the first 10 days of August 2021.
+
+Solution:
+
+with adjusted_prices as (select ticker, market_date, price, case when right(volume,1)='K' then left(volume,-1)::numeric*1000 when right(volume,1)='M' then left(volume,-1)::numeric*1000000 when volume='-' then 0 end as volume from trading.prices), 
+moving_averages as (select ticker, market_date, round(price::numeric,2), round((avg(price) over (partition by ticker order by market_date range between '7 days' preceding and current row))::numeric,4) as moving_avg_price, volume, round((avg(volume) over (partition by ticker order by market_date range between '7 days' preceding and current row))::numeric,2) as moving_avg_volume from adjusted_prices)
+select * from moving_averages where market_date between '2021-08-01' and '2021-08-10' order by ticker, market_date;
+
+ ticker | market_date |  round   | moving_avg_price |   volume   | moving_avg_volume 
+--------+-------------+----------+------------------+------------+-------------------
+ BTC    | 2021-08-01  | 39878.30 |       39469.9625 |   80330.00 |          98827.50
+ BTC    | 2021-08-02  | 39168.40 |       39942.1250 |   74810.00 |         100041.25
+ BTC    | 2021-08-03  | 38130.30 |       40048.8375 |     260.00 |          77870.00
+ BTC    | 2021-08-04  | 39736.90 |       40084.4500 |   79220.00 |          75242.50
+ BTC    | 2021-08-05  | 40867.20 |       40192.4500 |  130600.00 |          72952.50
+ BTC    | 2021-08-06  | 42795.40 |       40541.7000 |  111930.00 |          77531.25
+ BTC    | 2021-08-07  | 44614.20 |       40843.0500 |  112840.00 |          79330.00
+ BTC    | 2021-08-08  | 43792.80 |       41122.9375 |  105250.00 |          86905.00
+ BTC    | 2021-08-09  | 46284.30 |       41923.6875 |  117080.00 |          91498.75
+ BTC    | 2021-08-10  | 45593.80 |       42726.8625 |   80550.00 |          92216.25
+ ETH    | 2021-08-01  |  2556.23 |        2368.6188 | 1200000.00 |        1034463.75
+ ETH    | 2021-08-02  |  2608.04 |        2420.9000 |  970670.00 |        1057430.00
+ ETH    | 2021-08-03  |  2506.65 |        2455.5400 |  158450.00 |         840986.25
+ ETH    | 2021-08-04  |  2725.29 |        2508.6738 | 1230000.00 |         838486.25
+ ETH    | 2021-08-05  |  2827.21 |        2574.6863 | 1650000.00 |         923618.75
+ ETH    | 2021-08-06  |  2889.43 |        2638.2488 | 1060000.00 |         975775.00
+ ETH    | 2021-08-07  |  3158.00 |        2725.3800 |   64840.00 |         855130.00
+ ETH    | 2021-08-08  |  3012.07 |        2785.3650 | 1250000.00 |         947995.00
+ ETH    | 2021-08-09  |  3162.93 |        2861.2025 | 1440000.00 |         977995.00
+ ETH    | 2021-08-10  |  3140.71 |        2927.7863 | 1120000.00 |         996661.25
+(20 rows)
+
+Notes:
+
+Window functions come always with the over section which could contain a 'partition by' clause, an 'orde by' clause and a 'range' clause.
+
+*** Question 3 ***
+
+Calculate the monthly cumulative volume trading for each ticker in 2020.
+Sort the output by ticker in chronological order with the month_start as the first day of each month.
+
+Answer:
+
+with monthly_volume as (select ticker, date_trunc('month', market_date)::date as month_start, sum(case when right(volume,1)='K' then left(volume,-1)::numeric*1000 when right(volume,1)='M' then left(volume,-1)::numeric*1000000 when volume='-' then 0 end) as monthly_volume from trading.prices where market_date between '2020-01-01' and '2020-12-31' group by ticker, month_start order by ticker, month_start)
+select ticker, month_start, sum(monthly_volume) over (partition by ticker order by month_start rows between unbounded preceding and current row) as cumulative_monthly_volume from monthly_volume order by ticker, month_start;
+
+ ticker | month_start | cumulative_monthly_volume 
+--------+-------------+---------------------------
+ BTC    | 2020-01-01  |               23451920.00
+ BTC    | 2020-02-01  |               46839130.00
+ BTC    | 2020-03-01  |               94680450.00
+ BTC    | 2020-04-01  |              134302740.00
+ BTC    | 2020-05-01  |              172687010.00
+ BTC    | 2020-06-01  |              188026610.00
+ BTC    | 2020-07-01  |              201272600.00
+ BTC    | 2020-08-01  |              216762630.00
+ BTC    | 2020-09-01  |              300641440.00
+ BTC    | 2020-10-01  |              303060020.00
+ BTC    | 2020-11-01  |              307220090.00
+ BTC    | 2020-12-01  |              311045880.00
+ ETH    | 2020-01-01  |              412070000.00
+ ETH    | 2020-02-01  |              969850000.00
+ ETH    | 2020-03-01  |             1765210000.00
+ ETH    | 2020-04-01  |             2520430000.00
+ ETH    | 2020-05-01  |             3067520000.00
+ ETH    | 2020-06-01  |             3286870000.00
+ ETH    | 2020-07-01  |             3524140000.00
+ ETH    | 2020-08-01  |             3772290000.00
+ ETH    | 2020-09-01  |             4181770000.00
+ ETH    | 2020-10-01  |             4394990000.00
+ ETH    | 2020-11-01  |             4877850000.00
+ ETH    | 2020-12-01  |             5177300000.00
+(24 rows)
+
+*** Question 4 ***
+
+Calculate the daily percentage change in volume for each ticker in the trading.prices table.
+Percentage change can be calculated as (current-previous)/previous.
+Multiply the percentage by 100 and around the value to 2 decimal places.
+Return data from the first 10 days of August 2021.
+
+Answer:
+
+with adjusted_volume as (select ticker, market_date, case when right(volume,1)='K' then left(volume,-1)::numeric*1000 when right(volume,1)='M' then left(volume,-1)::numeric*1000000 when volume='-' then 0 end as volume from trading.prices), 
+previous_volume as (select ticker, market_date, volume, lag(volume) over (partition by ticker order by market_date) as previous_volume from adjusted_volume where volume != 0) 
+select ticker, market_date, volume, previous_volume, round(100*(volume-previous_volume)/previous_volume,2) as daily_change from previous_volume where market_date between '2021-08-01' and '2021-08-10' order by ticker, market_date;
+
+ ticker | market_date |   volume   | previous_volume | daily_change 
+--------+-------------+------------+-----------------+--------------
+ BTC    | 2021-08-01  |   80330.00 |        44650.00 |        79.91
+ BTC    | 2021-08-02  |   74810.00 |        80330.00 |        -6.87
+ BTC    | 2021-08-03  |     260.00 |        74810.00 |       -99.65
+ BTC    | 2021-08-04  |   79220.00 |          260.00 |     30369.23
+ BTC    | 2021-08-05  |  130600.00 |        79220.00 |        64.86
+ BTC    | 2021-08-06  |  111930.00 |       130600.00 |       -14.30
+ BTC    | 2021-08-07  |  112840.00 |       111930.00 |         0.81
+ BTC    | 2021-08-08  |  105250.00 |       112840.00 |        -6.73
+ BTC    | 2021-08-09  |  117080.00 |       105250.00 |        11.24
+ BTC    | 2021-08-10  |   80550.00 |       117080.00 |       -31.20
+ ETH    | 2021-08-01  | 1200000.00 |       507080.00 |       136.65
+ ETH    | 2021-08-02  |  970670.00 |      1200000.00 |       -19.11
+ ETH    | 2021-08-03  |  158450.00 |       970670.00 |       -83.68
+ ETH    | 2021-08-04  | 1230000.00 |       158450.00 |       676.27
+ ETH    | 2021-08-05  | 1650000.00 |      1230000.00 |        34.15
+ ETH    | 2021-08-06  | 1060000.00 |      1650000.00 |       -35.76
+ ETH    | 2021-08-07  |   64840.00 |      1060000.00 |       -93.88
+ ETH    | 2021-08-08  | 1250000.00 |        64840.00 |      1827.82
+ ETH    | 2021-08-09  | 1440000.00 |      1250000.00 |        15.20
+ ETH    | 2021-08-10  | 1120000.00 |      1440000.00 |       -22.22
+(20 rows)
+
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+SCENARIO 5: Using Table Joins
+
+*** Question 1 ***
+
+Which top 3 participants have the most Bitcoin?
+Return the first_name of the participants and sort the output from highest to lowest total_quantity.
+
+Answer:
+
+select first_name, sum(case when txn_type = 'BUY' then quantity else -quantity end) as total_quantity from trading.transactions inner join trading.members on transactions.member_id = members.member_id where ticker='BTC' group by first_name order by total_quantity desc limit 3;
+
+ first_name |  total_quantity   
+------------+-------------------
+ Nandita    | 4160.219869506643
+ Leah       | 4046.090896672561
+ Ayush      | 3945.198083260507
+(3 rows)
+
+*** Question 2 ***
+
+Show the market_date values which have less than 5 transactions?
+Sort the output in reverse chronological order.
+
+Answer:
+
+select market_date, count(txn_id) as transaction_count from trading.prices left join trading.transactions on prices.market_date=transactions.txn_date and prices.ticker=transactions.ticker group by market_date having count(transactions.txn_id)<5 order by market_date desc;
+
+ market_date | transaction_count 
+-------------+-------------------
+ 2021-08-29  |                 0
+ 2021-08-28  |                 0
+ 2021-07-17  |                 3
+ 2021-01-06  |                 4
+ 2020-01-17  |                 4
+ 2019-07-15  |                 4
+ 2019-06-14  |                 3
+ 2018-10-20  |                 4
+(8 rows)
+
+Alternative solution:
+
+with daily_transactions as (select market_date, count(txn_id) as transaction_count from trading.prices left join trading.transactions on prices.market_date=transactions.txn_date and prices.ticker=transactions.ticker group by market_date) select * from daily_transactions where transaction_count<5 order by market_date desc;
+
+ market_date | transaction_count 
+-------------+-------------------
+ 2021-08-29  |                 0
+ 2021-08-28  |                 0
+ 2021-07-17  |                 3
+ 2021-01-06  |                 4
+ 2020-01-17  |                 4
+ 2019-07-15  |                 4
+ 2019-06-14  |                 3
+ 2018-10-20  |                 4
+(8 rows)
+
+*** Question 3 ***
+
+Part 1: Calculate the Dollar Cost Average
+What is the dollar cost average (btc_dca) for all Bitcoin purchases by region for each calendar year?
+- Create a column called year_start and use the start of the calendar year
+- The dollar cost average calculation is vct_dca = sum(quantity * price)/sum(quantity)
+
+Part 2: Yearly Dollar Cost Average Ranking
+Use this btc_dca value to generate a dca_ranking column for each year, the region with the lowest btc_dca each year has rank 1
+
+Part 3: Dollar Cost Average Yearly Percentage change
+Calculate the yearly percentage change in dca for each region to 2 decimal places, this calculation is (current - previous)/previous
+
+Finally order the output by region and year_start.
+
+Answer:
+
+with dollar_cost_average as (select date_trunc('year', txn_date)::date as year_start, region, sum(quantity*price)/sum(quantity) as btc_dca from trading.transactions inner join trading.prices on transactions.ticker=prices.ticker and transactions.txn_date=prices.market_date inner join trading.members on transactions.member_id=members.member_id where transactions.ticker='BTC' and transactions.txn_type='BUY' group by year_start, region),
+window_functions as (select year_start, region, btc_dca, rank() over (partition by year_start order by btc_dca) as dca_ranking, lag(btc_dca) over (partition by region order by year_start) as previous_btc_dca from dollar_cost_average)
+select year_start, region, btc_dca, dca_ranking, round((100*(btc_dca - previous_btc_dca)/previous_btc_dca)::numeric,2) as dca_percentage_change from window_functions order by region,year_start;
+
+ year_start |    region     |      btc_dca       | dca_ranking | dca_percentage_change 
+------------+---------------+--------------------+-------------+-----------------------
+ 2017-01-01 | Africa        |  3987.626286706785 |           4 |                      
+ 2018-01-01 | Africa        |  7690.712833424109 |           3 |                 92.86
+ 2019-01-01 | Africa        |  7368.820379875002 |           4 |                 -4.19
+ 2020-01-01 | Africa        | 11114.124772590234 |           3 |                 50.83
+ 2021-01-01 | Africa        | 44247.215259596225 |           2 |                298.12
+ 2017-01-01 | Asia          | 4002.9387026011327 |           5 |                      
+ 2018-01-01 | Asia          |  7829.998856963902 |           4 |                 95.61
+ 2019-01-01 | Asia          |  7267.678553106325 |           1 |                 -7.18
+ 2020-01-01 | Asia          | 10759.621154846302 |           2 |                 48.05
+ 2021-01-01 | Asia          |  44570.90086967023 |           4 |                314.24
+ 2017-01-01 | Australia     | 3982.3314932168587 |           3 |                      
+ 2018-01-01 | Australia     |  7524.877928908972 |           1 |                 88.96
+ 2019-01-01 | Australia     |  7368.453742132604 |           3 |                 -2.08
+ 2020-01-01 | Australia     | 11413.906059189008 |           5 |                 54.90
+ 2021-01-01 | Australia     |  44866.30462189665 |           5 |                293.08
+ 2017-01-01 | India         |  3680.764368527639 |           1 |                      
+ 2018-01-01 | India         |  8031.110232138489 |           5 |                118.19
+ 2019-01-01 | India         |   7731.35453628214 |           5 |                 -3.73
+ 2020-01-01 | India         | 10333.485590472668 |           1 |                 33.66
+ 2021-01-01 | India         | 43793.713748380374 |           1 |                323.80
+ 2017-01-01 | United States | 3812.0063222997405 |           2 |                      
+ 2018-01-01 | United States | 7578.4751041769005 |           2 |                 98.81
+ 2019-01-01 | United States |  7368.166253830588 |           2 |                 -2.78
+ 2020-01-01 | United States | 11123.665750642194 |           4 |                 50.97
+ 2021-01-01 | United States | 44456.224164112806 |           3 |                299.65
+(25 rows)
+
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
