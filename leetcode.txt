@@ -1,0 +1,631 @@
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+*** 511. Game Play Analysis I ***
+
+SQL Schema
+
+Table: Acticity
++--------------+---------+
+| Column Name  | Type    |
++--------------+---------+
+| player_id    | int     |
+| device_id    | int     |
+| event_date   | date    |
+| games_played | int     |
++--------------+---------+
+(player_id, event_date) is the primary key of this table.
+This table shows the activity of players of some games.
+Each row is a record of a player who logged in and played a number of games (possibly 0) before logging out on someday using some device.
+
+Write an SQL query to report the first login date for each player.
+Return the result table in any order.
+The query result format is in the following example.
+
+Input: 
+Activity table:
++-----------+-----------+------------+--------------+
+| player_id | device_id | event_date | games_played |
++-----------+-----------+------------+--------------+
+| 1         | 2         | 2016-03-01 | 5            |
+| 1         | 2         | 2016-05-02 | 6            |
+| 2         | 3         | 2017-06-25 | 1            |
+| 3         | 1         | 2016-03-02 | 0            |
+| 3         | 4         | 2018-07-03 | 5            |
++-----------+-----------+------------+--------------+
+Output: 
++-----------+-------------+
+| player_id | first_login |
++-----------+-------------+
+| 1         | 2016-03-01  |
+| 2         | 2017-06-25  |
+| 3         | 2016-03-02  |
++-----------+-------------+
+
+Solution:
+
+select player_id, min(event_date) as first_login from activity group by player_id;
+
+*** 512. Game Play Analysis II ***
+
+Write an SQL query to report the device that is first logged in for each player.
+Return the result table in any order.
+The query result format is in the following example.
+
+Input: 
+Activity table:
++-----------+-----------+------------+--------------+
+| player_id | device_id | event_date | games_played |
++-----------+-----------+------------+--------------+
+| 1         | 2         | 2016-03-01 | 5            |
+| 1         | 2         | 2016-05-02 | 6            |
+| 2         | 3         | 2017-06-25 | 1            |
+| 3         | 1         | 2016-03-02 | 0            |
+| 3         | 4         | 2018-07-03 | 5            |
++-----------+-----------+------------+--------------+
+Output: 
++-----------+-----------+
+| player_id | device_id |
++-----------+-----------+
+| 1         | 2         |
+| 2         | 3         |
+| 3         | 1         |
++-----------+-----------+
+
+Solution:
+
+with first_login as (select player_id, min(event_date) as event_date from activity group by player_id)
+select activity.player_id, activity.device_id from activity inner join first_login on activity.player_id = first_login.player_id and activity.event_date = first_login.event_date;
+
+*** 534. Game Play Analysis III ***
+
+Write an SQL query to report for each player and date, how many games played so far by the player. That is, the total number of games played by the player until that date. Check the example for clarity.
+Return the result table in any order.
+The query result format is in the following example.
+
+Input: 
+Activity table:
++-----------+-----------+------------+--------------+
+| player_id | device_id | event_date | games_played |
++-----------+-----------+------------+--------------+
+| 1         | 2         | 2016-03-01 | 5            |
+| 1         | 2         | 2016-05-02 | 6            |
+| 1         | 3         | 2017-06-25 | 1            |
+| 3         | 1         | 2016-03-02 | 0            |
+| 3         | 4         | 2018-07-03 | 5            |
++-----------+-----------+------------+--------------+
+Output: 
++-----------+------------+---------------------+
+| player_id | event_date | games_played_so_far |
++-----------+------------+---------------------+
+| 1         | 2016-03-01 | 5                   |
+| 1         | 2016-05-02 | 11                  |
+| 1         | 2017-06-25 | 12                  |
+| 3         | 2016-03-02 | 0                   |
+| 3         | 2018-07-03 | 5                   |
++-----------+------------+---------------------+
+Explanation: 
+For the player with id 1, 5 + 6 = 11 games played by 2016-05-02, and 5 + 6 + 1 = 12 games played by 2017-06-25.
+For the player with id 3, 0 + 5 = 5 games played by 2018-07-03.
+Note that for each player we only care about the days when the player logged in.
+
+Solution:
+
+select player_id, event_date, sum(games_played) over (partition by player_id order by event_date rows between unbounded preceding and current row) as games_played_so_far from activity;
+
+*** 550. Game Play Analysis IV ***
+
+Write an SQL query to report the fraction of players that logged in again on the day after the day they first logged in, rounded to 2 decimal places. In other words, you need to count the number of players that logged in for at least two consecutive days starting from their first login date, then divide that number by the total number of players.
+The query result format is in the following example.
+
+Input: 
+Activity table:
++-----------+-----------+------------+--------------+
+| player_id | device_id | event_date | games_played |
++-----------+-----------+------------+--------------+
+| 1         | 2         | 2016-03-01 | 5            |
+| 1         | 2         | 2016-03-02 | 6            |
+| 2         | 3         | 2017-06-25 | 1            |
+| 3         | 1         | 2016-03-02 | 0            |
+| 3         | 4         | 2018-07-03 | 5            |
++-----------+-----------+------------+--------------+
+Output: 
++-----------+
+| fraction  |
++-----------+
+| 0.33      |
++-----------+
+Explanation: 
+Only the player with id 1 logged back in after the first day he had logged in so the answer is 1/3 = 0.33
+
+Solution:
+
+with distinct_players as (select count(distinct player_id) as total from activity),
+first_logins as (select player_id, min(event_date) as first_login from activity group by player_id),
+second_logins as (select activity.player_id, activity.event_date as second_login from activity inner join first_logins on activity.player_id = first_logins.player_id where datediff(activity.event_date, first_logins.first_login) = 1)
+select round(count(distinct player_id)/(select total from distinct_players), 2) as fraction from second_logins;
+
+*** 1097. Game Play Analysis V ***
+
+The install date of a player is the first login day of that player.
+We define day one retention of some date x to be the number of players whose install date is x and they logged back in on the day right after x, divided by the number of players whose install date is x, rounded to 2 decimal places.
+Write an SQL query to report for each install date, the number of players that installed the game on that day, and the day one retention.
+Return the result table in any order.
+The query result format is in the following example.
+
+Input: 
+Activity table:
++-----------+-----------+------------+--------------+
+| player_id | device_id | event_date | games_played |
++-----------+-----------+------------+--------------+
+| 1         | 2         | 2016-03-01 | 5            |
+| 1         | 2         | 2016-03-02 | 6            |
+| 2         | 3         | 2017-06-25 | 1            |
+| 3         | 1         | 2016-03-01 | 0            |
+| 3         | 4         | 2016-07-03 | 5            |
++-----------+-----------+------------+--------------+
+Output: 
++------------+----------+----------------+
+| install_dt | installs | Day1_retention |
++------------+----------+----------------+
+| 2016-03-01 | 2        | 0.50           |
+| 2017-06-25 | 1        | 0.00           |
++------------+----------+----------------+
+Explanation: 
+Player 1 and 3 installed the game on 2016-03-01 but only player 1 logged back in on 2016-03-02 so the day 1 retention of 2016-03-01 is 1 / 2 = 0.50
+Player 2 installed the game on 2017-06-25 but didn't log back in on 2017-06-26 so the day 1 retention of 2017-06-25 is 0 / 1 = 0.00
+
+Solution:
+
+with first_logins as (select player_id, min(event_date) as first_login from activity group by player_id),
+second_logins as (select activity.player_id, first_logins.first_login from activity inner join first_logins on activity.player_id = first_logins.player_id where datediff(activity.event_date, first_logins.first_login) = 1),
+first_login_counts as (select first_login as install_dt, count(distinct player_id) as installs from first_logins group by first_login),
+second_login_counts as (select first_login as install_dt, count(distinct player_id) as installs from second_logins group by first_login),
+combined_counts as (select first_login_counts.install_dt as install_dt, installs as installs1, (select second_login_counts.installs from second_login_counts where second_login_counts.install_dt = first_login_counts.install_dt) as installs2 from first_login_counts)
+select install_dt, installs1 as installs, round((case when installs2 is null then 0 else installs2 end)/installs1,2) as Day1_retention from combined_counts;
+
+Another simpler solution from discussions:
+
+select install_dt, count(distinct player_id) as installs, round(sum(case when datediff(curr_dt,install_dt)=1 then 1 else 0 end)/count(distinct player_id),2) as Day1_retention from 
+(select player_id, min(event_date) over (partition by player_id order by event_date) as install_dt, event_date as curr_dt from activity) as ba
+group by install_dt;
+
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+*** 1075. Project Employees I ***
+
+Schema:
+
+Table: Project
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| project_id  | int     |
+| employee_id | int     |
++-------------+---------+
+(project_id, employee_id) is the primary key of this table.
+employee_id is a foreign key to Employee table.
+Each row of this table indicates that the employee with employee_id is working on the project with project_id.
+
+Table: Employee
++------------------+---------+
+| Column Name      | Type    |
++------------------+---------+
+| employee_id      | int     |
+| name             | varchar |
+| experience_years | int     |
++------------------+---------+
+employee_id is the primary key of this table.
+Each row of this table contains information about one employee.
+
+Write an SQL query that reports the average experience years of all the employees for each project, rounded to 2 digits.
+Return the result table in any order.
+The query result format is in the following example.
+
+Input: 
+Project table:
++-------------+-------------+
+| project_id  | employee_id |
++-------------+-------------+
+| 1           | 1           |
+| 1           | 2           |
+| 1           | 3           |
+| 2           | 1           |
+| 2           | 4           |
++-------------+-------------+
+Employee table:
++-------------+--------+------------------+
+| employee_id | name   | experience_years |
++-------------+--------+------------------+
+| 1           | Khaled | 3                |
+| 2           | Ali    | 2                |
+| 3           | John   | 1                |
+| 4           | Doe    | 2                |
++-------------+--------+------------------+
+Output: 
++-------------+---------------+
+| project_id  | average_years |
++-------------+---------------+
+| 1           | 2.00          |
+| 2           | 2.50          |
++-------------+---------------+
+Explanation: The average experience years for the first project is (3 + 2 + 1) / 3 = 2.00 and for the second project is (3 + 2) / 2 = 2.50
+
+Solution:
+
+select project_id, round(avg(experience_years),2) as average_years from project join employee on project.employee_id=employee.employee_id group by project_id;
+
+*** 1076. Project Employees II ***
+
+Write an SQL query that reports all the projects that have the most employees.
+Return the result table in any order.
+The query result format is in the following example.
+
+Input: 
+Project table:
++-------------+-------------+
+| project_id  | employee_id |
++-------------+-------------+
+| 1           | 1           |
+| 1           | 2           |
+| 1           | 3           |
+| 2           | 1           |
+| 2           | 4           |
++-------------+-------------+
+Employee table:
++-------------+--------+------------------+
+| employee_id | name   | experience_years |
++-------------+--------+------------------+
+| 1           | Khaled | 3                |
+| 2           | Ali    | 2                |
+| 3           | John   | 1                |
+| 4           | Doe    | 2                |
++-------------+--------+------------------+
+Output: 
++-------------+
+| project_id  |
++-------------+
+| 1           |
++-------------+
+Explanation: The first project has 3 employees while the second one has 2.
+
+Solution:
+
+with resources as (select project_id, count(employee_id) as no_employee from project group by project_id)
+select project_id from resources where no_employee = (select max(no_employee) from resources);
+
+*** 1077. Project Employees III ***
+
+Write an SQL query that reports the most experienced employees in each project. In case of a tie, report all employees with the maximum number of experience years.
+Return the result table in any order.
+The query result format is in the following example.
+
+Input: 
+Project table:
++-------------+-------------+
+| project_id  | employee_id |
++-------------+-------------+
+| 1           | 1           |
+| 1           | 2           |
+| 1           | 3           |
+| 2           | 1           |
+| 2           | 4           |
++-------------+-------------+
+Employee table:
++-------------+--------+------------------+
+| employee_id | name   | experience_years |
++-------------+--------+------------------+
+| 1           | Khaled | 3                |
+| 2           | Ali    | 2                |
+| 3           | John   | 3                |
+| 4           | Doe    | 2                |
++-------------+--------+------------------+
+Output: 
++-------------+---------------+
+| project_id  | employee_id   |
++-------------+---------------+
+| 1           | 1             |
+| 1           | 3             |
+| 2           | 1             |
++-------------+---------------+
+Explanation: Both employees with id 1 and 3 have the most experience among the employees of the first project. For the second project, the employee with id 1 has the most experience.
+
+Solution:
+
+with max_per_project as (select project_id, max(experience_years) as max_exp from project join employee on project.employee_id=employee.employee_id group by project_id),
+combined as (select project.project_id, employee.employee_id, experience_years, (select max_exp from max_per_project where max_per_project.project_id=project.project_id) as max_exp from project join employee on project.employee_id=employee.employee_id)
+select project_id, employee_id from combined where experience_years=max_exp;
+
+Another simpler solution from discussions:
+
+select project_id, employee_id from (select p.project_id, p.employee_id , dense_rank() over(partition by p.project_id order by experience_years DESC) as drnk from project p join employee e on p.employee_id = e.employee_id) as t where drnk=1;
+
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+*** 1082. Sales Analysis I ***
+
+Schema:
+
+Table: Product
++--------------+---------+
+| Column Name  | Type    |
++--------------+---------+
+| product_id   | int     |
+| product_name | varchar |
+| unit_price   | int     |
++--------------+---------+
+product_id is the primary key of this table.
+Each row of this table indicates the name and the price of each product.
+
+Table: Sales
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| seller_id   | int     |
+| product_id  | int     |
+| buyer_id    | int     |
+| sale_date   | date    |
+| quantity    | int     |
+| price       | int     |
++-------------+---------+
+This table has no primary key, it can have repeated rows.
+product_id is a foreign key to the Product table.
+Each row of this table contains some information about one sale.
+
+Write an SQL query that reports the best seller by total sales price, If there is a tie, report them all.
+Return the result table in any order.
+The query result format is in the following example.
+
+Input: 
+Product table:
++------------+--------------+------------+
+| product_id | product_name | unit_price |
++------------+--------------+------------+
+| 1          | S8           | 1000       |
+| 2          | G4           | 800        |
+| 3          | iPhone       | 1400       |
++------------+--------------+------------+
+Sales table:
++-----------+------------+----------+------------+----------+-------+
+| seller_id | product_id | buyer_id | sale_date  | quantity | price |
++-----------+------------+----------+------------+----------+-------+
+| 1         | 1          | 1        | 2019-01-21 | 2        | 2000  |
+| 1         | 2          | 2        | 2019-02-17 | 1        | 800   |
+| 2         | 2          | 3        | 2019-06-02 | 1        | 800   |
+| 3         | 3          | 4        | 2019-05-13 | 2        | 2800  |
++-----------+------------+----------+------------+----------+-------+
+Output: 
++-------------+
+| seller_id   |
++-------------+
+| 1           |
+| 3           |
++-------------+
+Explanation: Both sellers with id 1 and 3 sold products with the most total price of 2800.
+
+Solution:
+
+with agg_sales as (select seller_id, sum(price) as total from sales group by seller_id)
+select seller_id from (select seller_id, dense_rank() over(order by total DESC) as drnk from agg_sales) as t where drnk=1;
+
+*** 1083. Sales Analysis II ***
+
+Write an SQL query that reports the buyers who have bought S8 but not iPhone. Note that S8 and iPhone are products present in the Product table.
+Return the result table in any order.
+The query result format is in the following example.
+
+Input: 
+Product table:
++------------+--------------+------------+
+| product_id | product_name | unit_price |
++------------+--------------+------------+
+| 1          | S8           | 1000       |
+| 2          | G4           | 800        |
+| 3          | iPhone       | 1400       |
++------------+--------------+------------+
+Sales table:
++-----------+------------+----------+------------+----------+-------+
+| seller_id | product_id | buyer_id | sale_date  | quantity | price |
++-----------+------------+----------+------------+----------+-------+
+| 1         | 1          | 1        | 2019-01-21 | 2        | 2000  |
+| 1         | 2          | 2        | 2019-02-17 | 1        | 800   |
+| 2         | 1          | 3        | 2019-06-02 | 1        | 800   |
+| 3         | 3          | 3        | 2019-05-13 | 2        | 2800  |
++-----------+------------+----------+------------+----------+-------+
+Output: 
++-------------+
+| buyer_id    |
++-------------+
+| 1           |
++-------------+
+Explanation: The buyer with id 1 bought an S8 but did not buy an iPhone. The buyer with id 3 bought both.
+
+Solution:
+
+with s8_buyers as (select distinct buyer_id from sales where product_id = (select product_id as id from product where product_name = 'S8')),
+iPhone_buyers as (select distinct buyer_id from sales where product_id = (select product_id as id from product where product_name = 'iPhone'))
+select buyer_id from s8_buyers left join iPhone_buyers using(buyer_id) where iPhone_buyers.buyer_id is null;
+
+Alternative solution for dbs supporting minus operator (like Oracle):
+
+select buyer_id from sales where product_id = (select product_id as id from product where product_name = 'S8') minus select buyer_id from sales where product_id = (select product_id as id from product where product_name = 'iPhone');
+
+*** 1084. Sales Analysis III ***
+
+Write an SQL query that reports the products that were only sold in the spring of 2019. That is, between 2019-01-01 and 2019-03-31 inclusive.
+Return the result table in any order.
+The query result format is in the following example.
+
+Input: 
+Product table:
++------------+--------------+------------+
+| product_id | product_name | unit_price |
++------------+--------------+------------+
+| 1          | S8           | 1000       |
+| 2          | G4           | 800        |
+| 3          | iPhone       | 1400       |
++------------+--------------+------------+
+Sales table:
++-----------+------------+----------+------------+----------+-------+
+| seller_id | product_id | buyer_id | sale_date  | quantity | price |
++-----------+------------+----------+------------+----------+-------+
+| 1         | 1          | 1        | 2019-01-21 | 2        | 2000  |
+| 1         | 2          | 2        | 2019-02-17 | 1        | 800   |
+| 2         | 2          | 3        | 2019-06-02 | 1        | 800   |
+| 3         | 3          | 4        | 2019-05-13 | 2        | 2800  |
++-----------+------------+----------+------------+----------+-------+
+Output: 
++-------------+--------------+
+| product_id  | product_name |
++-------------+--------------+
+| 1           | S8           |
++-------------+--------------+
+Explanation: 
+The product with id 1 was only sold in the spring of 2019.
+The product with id 2 was sold in the spring of 2019 but was also sold after the spring of 2019.
+The product with id 3 was sold after spring 2019.
+We return only product 1 as it is the product that was only sold in the spring of 2019.
+
+Solution:
+
+with sales_in as (select distinct product_id from sales where sale_date between '2019-01-01' and '2019-03-31'),
+sales_out as (select distinct product_id from sales where sale_date < '2019-01-01' or sale_date > '2019-03-31'),
+sales_exclusive as (select product_id from sales_in left join sales_out using(product_id) where sales_out.product_id is null)
+select product_id, product_name from product join sales_exclusive using(product_id);
+
+Another simpler solutions from discussions:
+
+with sold_q_2_4 as (select distinct product_id from sales where sale_date not between '2019-01-01' and '2019-03-31')
+select distinct p.product_id, p.product_name from sales s join product p using (product_id) where s.product_id not in (select product_id from sold_q_2_4);
+
+select p.product_id, p.product_name from product p join sales s using(product_id) group by s.product_id having min(s.sale_date) >= '2019-01-01' and max(s.sale_date) <= '2019-03-31';
+
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+*** 1148. Article Views I ***
+
+Schema:
+
+Table: Views
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| article_id    | int     |
+| author_id     | int     |
+| viewer_id     | int     |
+| view_date     | date    |
++---------------+---------+
+There is no primary key for this table, it may have duplicate rows.
+Each row of this table indicates that some viewer viewed an article (written by some author) on some date. 
+Note that equal author_id and viewer_id indicate the same person.
+
+Write an SQL query to find all the authors that viewed at least one of their own articles.
+Return the result table sorted by id in ascending order.
+The query result format is in the following example.
+
+Input: 
+Views table:
++------------+-----------+-----------+------------+
+| article_id | author_id | viewer_id | view_date  |
++------------+-----------+-----------+------------+
+| 1          | 3         | 5         | 2019-08-01 |
+| 1          | 3         | 6         | 2019-08-02 |
+| 2          | 7         | 7         | 2019-08-01 |
+| 2          | 7         | 6         | 2019-08-02 |
+| 4          | 7         | 1         | 2019-07-22 |
+| 3          | 4         | 4         | 2019-07-21 |
+| 3          | 4         | 4         | 2019-07-21 |
++------------+-----------+-----------+------------+
+Output: 
++------+
+| id   |
++------+
+| 4    |
+| 7    |
++------+
+
+Solution:
+
+select distinct author_id as id from views where author_id=viewer_id order by id;
+
+*** 1149. Article Views II ***
+
+Write an SQL query to find all the people who viewed more than one article on the same date.
+Return the result table sorted by id in ascending order.
+The query result format is in the following example.
+
+Solution:
+
+select distinct viewer_id as id from views group by view_date, viewer_id having count(distinct article_id) > 1 order by id;
+
+■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+*** 1113. Reported Posts ***
+
+Schema:
+
+Table: Actions
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| user_id       | int     |
+| post_id       | int     |
+| action_date   | date    | 
+| action        | enum    |
+| extra         | varchar |
++---------------+---------+
+There is no primary key for this table, it may have duplicate rows.
+The action column is an ENUM type of ('view', 'like', 'reaction', 'comment', 'report', 'share').
+The extra column has optional information about the action, such as a reason for the report or a type of reaction.
+
+Write an SQL query that reports the number of posts reported yesterday for each report reason. Assume today is 2019-07-05.
+Return the result table in any order.
+The query result format is in the following example.
+
+Input: 
+Actions table:
++---------+---------+-------------+--------+--------+
+| user_id | post_id | action_date | action | extra  |
++---------+---------+-------------+--------+--------+
+| 1       | 1       | 2019-07-01  | view   | null   |
+| 1       | 1       | 2019-07-01  | like   | null   |
+| 1       | 1       | 2019-07-01  | share  | null   |
+| 2       | 4       | 2019-07-04  | view   | null   |
+| 2       | 4       | 2019-07-04  | report | spam   |
+| 3       | 4       | 2019-07-04  | view   | null   |
+| 3       | 4       | 2019-07-04  | report | spam   |
+| 4       | 3       | 2019-07-02  | view   | null   |
+| 4       | 3       | 2019-07-02  | report | spam   |
+| 5       | 2       | 2019-07-04  | view   | null   |
+| 5       | 2       | 2019-07-04  | report | racism |
+| 5       | 5       | 2019-07-04  | view   | null   |
+| 5       | 5       | 2019-07-04  | report | racism |
++---------+---------+-------------+--------+--------+
+Output: 
++---------------+--------------+
+| report_reason | report_count |
++---------------+--------------+
+| spam          | 1            |
+| racism        | 2            |
++---------------+--------------+
+Explanation: Note that we only care about report reasons with non-zero number of reports.
+
+Solution:
+
+select extra report_reason, count(distinct post_id) report_count from actions where action_date='2019-07-04' and extra is not null and action='report' group by extra;
+
+*** 1132. Reported Posts II ***
+
+Extra Schema (plus Reported Posts):
+
+Table: Removals
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| post_id       | int     |
+| remove_date   | date    | 
++---------------+---------+
+post_id is the primary key of this table.
+Each row in this table indicates that some post was removed due to being reported or as a result of an admin review.
+
+Solution:
+
